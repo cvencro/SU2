@@ -4,8 +4,8 @@
  * \author R. Sanchez
  * \version 5.0.0 "Raven"
  *
- * SU2 Lead Developers: Dr. Francisco Palacios (Francisco.D.Palacios@boeing.com).
- *                      Dr. Thomas D. Economon (economon@stanford.edu).
+ * SU2 Original Developers: Dr. Francisco D. Palacios.
+ *                          Dr. Thomas D. Economon.
  *
  * SU2 Developers: Prof. Juan J. Alonso's group at Stanford University.
  *                 Prof. Piero Colonna's group at Delft University of Technology.
@@ -254,7 +254,7 @@ void CElement::Set_Kk_ab(su2double **val_Kk_ab, unsigned short nodeA, unsigned s
   
   unsigned short iDim, jDim;
   
-  /*--- TODO: Check this (there was a += instead of a =) ---*/
+  /*--- TODO: The incompressible implementation needs further work ---*/
 
   for(iDim = 0; iDim < nDim; iDim++) {
     for (jDim = 0; jDim < nDim; jDim++) {
