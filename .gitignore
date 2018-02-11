@@ -41,6 +41,7 @@ Makefile
 externals/autotools/bin
 externals/autotools/include
 externals/autotools/share
+externals/autotools/lib
 
 #logs and errors
 *.log
@@ -56,3 +57,9 @@ bin/
 
 # ignore project settings from eclipse
 .project
+
+# ignore swap files
+*.swp
+
+TestData
+*.stl

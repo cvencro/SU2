@@ -4,8 +4,8 @@
  * \author F. Palacios, T. Economon
  * \version 5.0.0 "Raven"
  *
- * SU2 Lead Developers: Dr. Francisco Palacios (Francisco.D.Palacios@boeing.com).
- *                      Dr. Thomas D. Economon (economon@stanford.edu).
+ * SU2 Original Developers: Dr. Francisco D. Palacios.
+ *                          Dr. Thomas D. Economon.
  *
  * SU2 Developers: Prof. Juan J. Alonso's group at Stanford University.
  *                 Prof. Piero Colonna's group at Delft University of Technology.
@@ -37,39 +37,41 @@ CEulerVariable::CEulerVariable(void) : CVariable() {
   
   /*--- Array initialization ---*/
   
-    HB_Source = NULL;
-    Primitive = NULL;
-    Secondary = NULL;
-    
-  Gradient_Primitive = NULL;
-    Gradient_Secondary = NULL;
+  HB_Source = NULL;
+  Primitive = NULL;
+  Secondary = NULL;
   
-    Limiter_Primitive = NULL;
-    Limiter_Secondary = NULL;
+  Gradient_Primitive = NULL;
+  Gradient_Secondary = NULL;
+  
+  Limiter_Primitive = NULL;
+  Limiter_Secondary = NULL;
   
   WindGust    = NULL;
   WindGustDer = NULL;
-
+  
   nPrimVar     = 0;
   nPrimVarGrad = 0;
-
+  
   nSecondaryVar     = 0;
   nSecondaryVarGrad = 0;
- 
+  
   Undivided_Laplacian = NULL;
- 
+  
+  Solution_New = NULL;
+
 }
 
 CEulerVariable::CEulerVariable(su2double val_density, su2double *val_velocity, su2double val_energy, unsigned short val_nDim,
                                unsigned short val_nvar, CConfig *config) : CVariable(val_nDim, val_nvar, config) {
     unsigned short iVar, iDim, iMesh, nMGSmooth = 0;
   
-  bool low_fidelity = config->GetLowFidelitySim();
   bool dual_time = ((config->GetUnsteady_Simulation() == DT_STEPPING_1ST) ||
                     (config->GetUnsteady_Simulation() == DT_STEPPING_2ND));
   bool viscous = config->GetViscous();
   bool windgust = config->GetWind_Gust();
-  
+  bool classical_rk4 = (config->GetKind_TimeIntScheme_Flow() == CLASSICAL_RK4_EXPLICIT);
+
   /*--- Array initialization ---*/
   
   HB_Source = NULL;
@@ -93,6 +95,8 @@ CEulerVariable::CEulerVariable(su2double val_density, su2double *val_velocity, s
 
   Undivided_Laplacian = NULL;
 
+  Solution_New = NULL;
+
   /*--- Allocate and initialize the primitive variables and gradients ---*/
   nPrimVar = nDim+9; nPrimVarGrad = nDim+4;
   if (viscous) { nSecondaryVar = 8; nSecondaryVarGrad = 2; }
@@ -112,7 +116,7 @@ CEulerVariable::CEulerVariable(su2double val_density, su2double *val_velocity, s
   for (iMesh = 0; iMesh <= config->GetnMGLevels(); iMesh++)
     nMGSmooth += config->GetMG_CorrecSmooth(iMesh);
   
-  if ((nMGSmooth > 0) || low_fidelity) {
+  if (nMGSmooth > 0) {
     Residual_Sum = new su2double [nVar];
     Residual_Old = new su2double [nVar];
   }
@@ -134,7 +138,6 @@ CEulerVariable::CEulerVariable(su2double val_density, su2double *val_velocity, s
   for (iVar = 0; iVar < nSecondaryVarGrad; iVar++)
     Limiter_Secondary[iVar] = 0.0;
 
-
   Limiter = new su2double [nVar];
   for (iVar = 0; iVar < nVar; iVar++)
     Limiter[iVar] = 0.0;
@@ -146,8 +149,8 @@ CEulerVariable::CEulerVariable(su2double val_density, su2double *val_velocity, s
     Solution_Min[iVar] = 0.0;
   }
   
-    /*--- Solution and old solution initialization ---*/
-  
+  /*--- Solution and old solution initialization ---*/
+
   Solution[0] = val_density;
   Solution_Old[0] = val_density;
   for (iDim = 0; iDim < nDim; iDim++) {
@@ -157,6 +160,16 @@ CEulerVariable::CEulerVariable(su2double val_density, su2double *val_velocity, s
   Solution[nVar-1] = val_density*val_energy;
   Solution_Old[nVar-1] = val_density*val_energy;
 
+  /*--- New solution initialization for Classical RK4 ---*/
+
+  if (classical_rk4) {
+    Solution_New = new su2double[nVar];
+    Solution_New[0] = val_density;
+    for (iDim = 0; iDim < nDim; iDim++) {
+      Solution_New[iDim+1] = val_density*val_velocity[iDim];
+    }
+    Solution_New[nVar-1] = val_density*val_energy;
+  }
 
     /*--- Allocate and initialize solution for dual time strategy ---*/
   
@@ -216,12 +229,12 @@ CEulerVariable::CEulerVariable(su2double val_density, su2double *val_velocity, s
 CEulerVariable::CEulerVariable(su2double *val_solution, unsigned short val_nDim, unsigned short val_nvar, CConfig *config) : CVariable(val_nDim, val_nvar, config) {
     unsigned short iVar, iDim, iMesh, nMGSmooth = 0;
   
-  bool low_fidelity = config->GetLowFidelitySim();
   bool dual_time = ((config->GetUnsteady_Simulation() == DT_STEPPING_1ST) ||
                     (config->GetUnsteady_Simulation() == DT_STEPPING_2ND));
   bool viscous = config->GetViscous();
   bool windgust = config->GetWind_Gust();
-  
+  bool classical_rk4 = (config->GetKind_TimeIntScheme_Flow() == CLASSICAL_RK4_EXPLICIT);
+
   /*--- Array initialization ---*/
   
   HB_Source = NULL;
@@ -244,14 +257,18 @@ CEulerVariable::CEulerVariable(su2double *val_solution, unsigned short val_nDim,
   nSecondaryVarGrad = 0;
  
   Undivided_Laplacian = NULL;
+
+  Solution_New = NULL;
  
-    /*--- Allocate and initialize the primitive variables and gradients ---*/
+  /*--- Allocate and initialize the primitive variables and gradients ---*/
+  
   nPrimVar = nDim+9; nPrimVarGrad = nDim+4;
   if (viscous) { nSecondaryVar = 8; nSecondaryVarGrad = 2; }
   else { nSecondaryVar = 2; nSecondaryVarGrad = 2; }
 
   
   /*--- Allocate residual structures ---*/
+  
   Res_TruncError = new su2double [nVar];
   
   for (iVar = 0; iVar < nVar; iVar++) {
@@ -259,20 +276,23 @@ CEulerVariable::CEulerVariable(su2double *val_solution, unsigned short val_nDim,
   }
   
   /*--- Only for residual smoothing (multigrid) ---*/
+  
   for (iMesh = 0; iMesh <= config->GetnMGLevels(); iMesh++)
     nMGSmooth += config->GetMG_CorrecSmooth(iMesh);
   
-  if ((nMGSmooth > 0) || low_fidelity) {
+  if (nMGSmooth > 0) {
     Residual_Sum = new su2double [nVar];
     Residual_Old = new su2double [nVar];
   }
   
   /*--- Allocate undivided laplacian (centered) and limiter (upwind)---*/
+  
   if (config->GetKind_ConvNumScheme_Flow() == SPACE_CENTERED)
     Undivided_Laplacian = new su2double [nVar];
   
   /*--- Always allocate the slope limiter,
    and the auxiliar variables (check the logic - JST with 2nd order Turb model - ) ---*/
+
   Limiter_Primitive = new su2double [nPrimVarGrad];
   for (iVar = 0; iVar < nPrimVarGrad; iVar++)
     Limiter_Primitive[iVar] = 0.0;
@@ -280,7 +300,6 @@ CEulerVariable::CEulerVariable(su2double *val_solution, unsigned short val_nDim,
   Limiter_Secondary = new su2double [nSecondaryVarGrad];
   for (iVar = 0; iVar < nSecondaryVarGrad; iVar++)
     Limiter_Secondary[iVar] = 0.0;
-
 
   Limiter = new su2double [nVar];
   for (iVar = 0; iVar < nVar; iVar++)
@@ -294,12 +313,23 @@ CEulerVariable::CEulerVariable(su2double *val_solution, unsigned short val_nDim,
   }
   
   /*--- Solution initialization ---*/
+  
   for (iVar = 0; iVar < nVar; iVar++) {
     Solution[iVar] = val_solution[iVar];
     Solution_Old[iVar] = val_solution[iVar];
   }
-  
+
+  /*--- New solution initialization for Classical RK4 ---*/
+
+  if (classical_rk4) {
+    Solution_New = new su2double[nVar];
+    for (iVar = 0; iVar < nVar; iVar++) {
+      Solution_New[iVar] = val_solution[iVar];
+    }
+  }
+
   /*--- Allocate and initializate solution for dual time strategy ---*/
+  
   if (dual_time) {
     Solution_time_n = new su2double [nVar];
     Solution_time_n1 = new su2double [nVar];
@@ -311,18 +341,21 @@ CEulerVariable::CEulerVariable(su2double *val_solution, unsigned short val_nDim,
   }
   
   /*--- Allocate space for the harmonic balance source terms ---*/
+  
   if (config->GetUnsteady_Simulation() == HARMONIC_BALANCE) {
     HB_Source = new su2double[nVar];
     for (iVar = 0; iVar < nVar; iVar++) HB_Source[iVar] = 0.0;
   }
 
   /*--- Allocate vector for wind gust and wind gust derivative field ---*/
+  
   if (windgust) {
     WindGust = new su2double [nDim];
     WindGustDer = new su2double [nDim+1];
   }
   
   /*--- Compressible flow, primitive variables nDim+5, (T, vx, vy, vz, P, rho, h, c) ---*/
+  
   Primitive = new su2double [nPrimVar];
   for (iVar = 0; iVar < nPrimVar; iVar++) Primitive[iVar] = 0.0;
   
@@ -332,6 +365,7 @@ CEulerVariable::CEulerVariable(su2double *val_solution, unsigned short val_nDim,
 
   /*--- Compressible flow, gradients primitive variables nDim+4, (T, vx, vy, vz, P, rho, h)
         We need P, and rho for running the adjoint problem ---*/
+  
   Gradient_Primitive = new su2double* [nPrimVarGrad];
   for (iVar = 0; iVar < nPrimVarGrad; iVar++) {
     Gradient_Primitive[iVar] = new su2double [nDim];
@@ -346,7 +380,6 @@ CEulerVariable::CEulerVariable(su2double *val_solution, unsigned short val_nDim,
       Gradient_Secondary[iVar][iDim] = 0.0;
   }
 
-  
 }
 
 CEulerVariable::~CEulerVariable(void) {
@@ -372,6 +405,8 @@ CEulerVariable::~CEulerVariable(void) {
   }
 
   if (Undivided_Laplacian != NULL) delete [] Undivided_Laplacian;
+
+  if (Solution_New != NULL) delete [] Solution_New;
   
 }
 
@@ -474,7 +509,10 @@ CNSVariable::CNSVariable(su2double val_density, su2double *val_velocity, su2doub
     Viscosity_Inf   = config->GetViscosity_FreeStreamND();
     Prandtl_Lam     = config->GetPrandtl_Lam();
     Prandtl_Turb    = config->GetPrandtl_Turb();
-  
+    
+    inv_TimeScale   = config->GetModVel_FreeStream() / config->GetRefLength();
+    Roe_Dissipation = 0.0;
+    Vortex_Tilting  = 0.0;
 }
 
 CNSVariable::CNSVariable(su2double *val_solution, unsigned short val_nDim,
@@ -485,11 +523,15 @@ CNSVariable::CNSVariable(su2double *val_solution, unsigned short val_nDim,
     Viscosity_Inf   = config->GetViscosity_FreeStreamND();
     Prandtl_Lam     = config->GetPrandtl_Lam();
     Prandtl_Turb    = config->GetPrandtl_Turb();
+    
+    inv_TimeScale   = config->GetModVel_FreeStream() / config->GetRefLength();
+    Roe_Dissipation = 0.0;
+    Vortex_Tilting  = 0.0;
 }
 
 CNSVariable::~CNSVariable(void) { }
 
-bool CNSVariable::SetVorticity(bool val_limiter) {
+bool CNSVariable::SetVorticity(void) {
   
   Vorticity[0] = 0.0; Vorticity[1] = 0.0;
   
@@ -504,7 +546,7 @@ bool CNSVariable::SetVorticity(bool val_limiter) {
   
 }
 
-bool CNSVariable::SetStrainMag(bool val_limiter) {
+bool CNSVariable::SetStrainMag(void) {
   
   su2double Div;
   unsigned short iDim;
@@ -540,6 +582,76 @@ bool CNSVariable::SetStrainMag(bool val_limiter) {
   AD::EndPreacc();
 
   return false;
+  
+}
+
+void CNSVariable::SetRoe_Dissipation_NTS(){
+  
+  static const su2double cnu = pow(0.09, 1.5), ch3 = 2.0;
+  
+  unsigned short iDim;
+  su2double Omega = 0, Omega_2 = 0, Baux, Gaux, Lturb, Kaux;
+  
+  AD::StartPreacc();
+  AD::SetPreaccIn(Vorticity, 3);
+  AD::SetPreaccIn(StrainMag);
+  /*--- Eddy viscosity ---*/
+  AD::SetPreaccIn(Primitive[nDim+5]);  
+  /*--- Laminar viscosity --- */
+  AD::SetPreaccIn(Primitive[nDim+6]);
+
+  for (iDim = 0; iDim < 3; iDim++){
+    Omega += Vorticity[iDim]*Vorticity[iDim];
+  }
+  Omega = sqrt(Omega);
+  
+  Omega_2 = pow(Omega,2.0);
+  Baux = (ch3 * Omega * max(StrainMag, Omega)) / max(sqrt((pow(StrainMag,2)+Omega_2)*0.5),1E-20);
+  Gaux = tanh(pow(Baux,4.0));
+  
+  Kaux = max(sqrt((Omega_2 + StrainMag)*0.5), 0.1 * inv_TimeScale);
+  
+  Lturb = sqrt((GetEddyViscosity() + GetLaminarViscosity())/(cnu*Kaux));
+  
+  Roe_Dissipation = Lturb*Gaux;
+  
+  AD::SetPreaccOut(Roe_Dissipation);
+  AD::EndPreacc();
+
+}
+
+void CNSVariable::SetRoe_Dissipation_FD(su2double val_wall_dist){
+  
+  /*--- Constants for Roe Dissipation ---*/
+  
+  static const su2double k2 = pow(0.41,2.0);
+  
+  su2double uijuij = 0, r_d;
+  unsigned short iDim, jDim;
+  
+  AD::StartPreacc();
+  AD::SetPreaccIn(Gradient_Primitive, nVar, nDim);
+  AD::SetPreaccIn(val_wall_dist);
+  /*--- Eddy viscosity ---*/
+  AD::SetPreaccIn(Primitive[nDim+5]);  
+  /*--- Laminar viscosity --- */
+  AD::SetPreaccIn(Primitive[nDim+6]);
+  
+  for(iDim=0;iDim<nDim;++iDim){
+    for(jDim=0;jDim<nDim;++jDim){
+      uijuij+= Gradient_Primitive[1+iDim][jDim]*Gradient_Primitive[1+iDim][jDim];
+    }
+  }
+  
+  uijuij=sqrt(fabs(uijuij));
+  uijuij=max(uijuij,1e-10);
+
+  r_d = (GetEddyViscosity()+GetLaminarViscosity())/(uijuij*k2*pow(val_wall_dist, 2.0));
+  
+  Roe_Dissipation = 1.0-tanh(pow(8.0*r_d,3.0));
+  
+  AD::SetPreaccOut(Roe_Dissipation);
+  AD::EndPreacc();
   
 }
 
@@ -635,4 +747,6 @@ void CNSVariable::SetSecondaryVar(CFluidModel *FluidModel) {
     SetdktdT_rho( FluidModel->GetdktdT_rho() );
 
 }
+
+
 

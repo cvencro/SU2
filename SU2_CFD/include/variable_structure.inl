@@ -4,8 +4,8 @@
  * \author F. Palacios, T. Economon
  * \version 5.0.0 "Raven"
  *
- * SU2 Lead Developers: Dr. Francisco Palacios (Francisco.D.Palacios@boeing.com).
- *                      Dr. Thomas D. Economon (economon@stanford.edu).
+ * SU2 Original Developers: Dr. Francisco D. Palacios.
+ *                          Dr. Thomas D. Economon.
  *
  * SU2 Developers: Prof. Juan J. Alonso's group at Stanford University.
  *                 Prof. Piero Colonna's group at Delft University of Technology.
@@ -243,9 +243,9 @@ inline void CVariable::SetSensor(su2double val_sensor) { Sensor = val_sensor; }
 
 inline void CVariable::SetSensor(su2double val_sensor, unsigned short val_iSpecies) {}
 
-inline su2double CVariable::GetDensity(void) {	return 0; }
+inline su2double CVariable::GetDensity(void) {  return 0; }
 
-inline su2double CVariable::GetDensity(unsigned short val_iSpecies) {	return 0; }
+inline su2double CVariable::GetDensity(unsigned short val_iSpecies) {  return 0; }
 
 inline su2double CVariable::GetEnergy(void) { return 0; }
 
@@ -308,6 +308,10 @@ inline void CVariable::SetForceProj_Vector(su2double *val_ForceProj_Vector) { }
 inline void CVariable::SetObjFuncSource(su2double *val_ObjFuncSource) { }
 
 inline void CVariable::SetIntBoundary_Jump(su2double *val_IntBoundary_Jump) { }
+
+inline su2double CVariable::GetGammaBC(void) { return 0; }
+
+inline void CVariable::SetGammaBC(su2double val_gamma) { }
 
 inline void CVariable::SetEnthalpy(void) { }
 
@@ -439,9 +443,9 @@ inline void CVariable::SetThermalConductivity(CConfig *config) { }
 
 inline void CVariable::SetSpecificHeatCp(su2double Cp) { }
 
-inline bool CVariable::SetVorticity(bool val_limiter) { return false; }
+inline bool CVariable::SetVorticity(void) { return false; }
 
-inline bool CVariable::SetStrainMag(bool val_limiter) { return false; }
+inline bool CVariable::SetStrainMag(void) { return false; }
 
 inline void CVariable::SetGradient_PrimitiveZero(unsigned short val_primvar) { }
 
@@ -509,6 +513,10 @@ inline su2double CVariable::GetGeometry_CrossTerm_Derivative(unsigned short val_
 
 inline void CVariable::SetGeometry_CrossTerm_Derivative(unsigned short iDim, su2double der) { }
 
+inline su2double CVariable::GetGeometry_CrossTerm_Derivative_Flow(unsigned short val_var) { return 0.0;}
+
+inline void CVariable::SetGeometry_CrossTerm_Derivative_Flow(unsigned short iDim, su2double der) { }
+
 inline void CVariable::Set_OldSolution_Geometry(void) { }
 
 inline su2double CVariable::Get_OldSolution_Geometry(unsigned short iDim) { return 0.0;}
@@ -562,16 +570,6 @@ inline void CVariable::SetSolution_Vel_time_n(unsigned short val_var, su2double 
 inline void CVariable::Set_OldSolution_Accel(void) { }
 
 inline void CVariable::Set_OldSolution_Vel(void) { }
-
-inline su2double CVariable::GetSolution_Adj(unsigned short val_var) {return 0; }
-
-inline void CVariable::SetSolution_Adj(unsigned short val_var, su2double val_solution_adj) { }
-
-inline su2double CVariable::GetGradient_Adj(unsigned short val_var) {return 0; }
-
-inline void CVariable::SetGradient_Adj(unsigned short val_var, su2double val_gradient_adj) { }
-
-inline void CVariable::AddGradient_Adj(unsigned short val_var, su2double val_gradient_adj) { }
 
 inline su2double CVariable::GetSolution_time_n(unsigned short val_var) { return 0; }
 
@@ -627,7 +625,7 @@ inline su2double *CVariable::GetReference_Geometry(void){ return NULL; }
 
 inline su2double CVariable::GetReference_Geometry(unsigned short iVar){ return 0.0; }
 
-inline void CVariable::SetPrestretch(unsigned short iVar, su2double val_prestretch){  }
+inline void CVariable::SetPrestretch(unsigned short iVar, su2double val_prestretch) {  }
 
 inline su2double *CVariable::GetPrestretch(void) { return NULL; }
 
@@ -658,6 +656,50 @@ inline void CVariable::GetAdjointSolution_Accel(su2double *adj_sol) { }
 inline void CVariable::SetAdjointSolution_Accel_time_n(su2double *adj_sol) { }
 
 inline void CVariable::GetAdjointSolution_Accel_time_n(su2double *adj_sol) { }
+
+inline su2double CVariable::GetSolution_New(unsigned short val_var) { return 0.0; }
+
+
+inline su2double CVariable::GetRoe_Dissipation(void) { return 0.0; }
+
+inline void CVariable::SetRoe_Dissipation_FD(su2double val_wall_dist) { }
+
+inline void CVariable::SetRoe_Dissipation_NTS() { }
+
+inline su2double CVariable::GetDES_LengthScale(void) { return 0.0; }
+
+inline void CVariable::SetDES_LengthScale(su2double val_des_lengthscale) { }
+
+inline void CVariable::SetSolution_New(void) { }
+
+inline void CVariable::AddSolution_New(unsigned short val_var, su2double val_solution) { }
+
+inline void CVariable::SetRoe_Dissipation(su2double val_dissipation) { }
+
+inline void CVariable::SetVortex_Tilting(su2double **PrimGrad_Flow, su2double* Vorticity, su2double LaminarViscosity) { }
+
+inline su2double CVariable::GetVortex_Tilting() { return 0.0; }
+
+inline su2double CEulerVariable::GetSolution_New(unsigned short val_var) { return Solution_New[val_var]; }
+
+inline su2double CNSVariable::GetRoe_Dissipation(void) { return Roe_Dissipation; }
+
+inline su2double CNSVariable::GetDES_LengthScale(void) { return DES_LengthScale; }
+
+inline void CNSVariable::SetDES_LengthScale(su2double val_des_lengthscale) { DES_LengthScale = val_des_lengthscale; }
+
+inline void CIncNSVariable::SetDES_LengthScale(su2double val_des_lengthscale) { DES_LengthScale = val_des_lengthscale; }
+
+inline su2double CIncNSVariable::GetDES_LengthScale(void) { return DES_LengthScale; }
+
+inline void CEulerVariable::SetSolution_New(void) {
+  for (unsigned short iVar = 0; iVar < nVar; iVar++)
+    Solution_New[iVar] = Solution[iVar];
+}
+
+inline void CEulerVariable::AddSolution_New(unsigned short val_var, su2double val_solution) {
+  Solution_New[val_var] += val_solution;
+}
 
 inline su2double CEulerVariable::GetDensity(void) { return Solution[0]; }
 
@@ -851,6 +893,10 @@ inline void CNSVariable::SetEddyViscosity(su2double eddy_visc) { Primitive[nDim+
 
 inline void CNSVariable::SetWallTemperature(su2double Temperature_Wall ) { Primitive[0] = Temperature_Wall; }
 
+inline void CNSVariable::SetRoe_Dissipation(su2double val_dissipation) { Roe_Dissipation = val_dissipation; }
+
+inline su2double CTurbSAVariable::GetVortex_Tilting() { return Vortex_Tilting; }
+
 inline su2double *CAdjEulerVariable::GetForceProj_Vector(void) { return ForceProj_Vector; }
 
 inline su2double *CAdjEulerVariable::GetObjFuncSource(void) { return ObjFuncSource; }
@@ -871,7 +917,7 @@ inline su2double CAdjEulerVariable::GetHarmonicBalance_Source(unsigned short val
 
 inline su2double *CAdjNSVariable::GetForceProj_Vector(void) { return ForceProj_Vector; }
 
-inline void CAdjNSVariable::SetForceProj_Vector(su2double *val_ForceProj_Vector) {	for (unsigned short iDim = 0; iDim < nDim; iDim++) ForceProj_Vector[iDim] = val_ForceProj_Vector[iDim]; }
+inline void CAdjNSVariable::SetForceProj_Vector(su2double *val_ForceProj_Vector) {  for (unsigned short iDim = 0; iDim < nDim; iDim++) ForceProj_Vector[iDim] = val_ForceProj_Vector[iDim]; }
 
 inline void CAdjNSVariable::SetPhi_Old(su2double *val_phi) { for (unsigned short iDim = 0; iDim < nDim; iDim++) Solution_Old[iDim+1] = val_phi[iDim]; };
 
@@ -994,8 +1040,8 @@ inline void CFEM_ElasVariable::AddStress_FEM(unsigned short iVar, su2double val_
 inline su2double *CFEM_ElasVariable::GetStress_FEM(void) { return Stress; }
 
 inline void CFEM_ElasVariable::Add_SurfaceLoad_Res(su2double *val_surfForce) {
-	for (unsigned short iVar = 0; iVar < nVar; iVar++)
-		Residual_Ext_Surf[iVar] += val_surfForce[iVar];
+  for (unsigned short iVar = 0; iVar < nVar; iVar++)
+    Residual_Ext_Surf[iVar] += val_surfForce[iVar];
 }
 
 inline void CFEM_ElasVariable::Set_SurfaceLoad_Res(unsigned short iVar, su2double val_surfForce) { Residual_Ext_Surf[iVar] = val_surfForce;}
@@ -1005,18 +1051,18 @@ inline su2double *CFEM_ElasVariable::Get_SurfaceLoad_Res(void) { return Residual
 inline su2double CFEM_ElasVariable::Get_SurfaceLoad_Res(unsigned short iVar) { return Residual_Ext_Surf[iVar];}
 
 inline void CFEM_ElasVariable::Clear_SurfaceLoad_Res(void) {
-	for (unsigned short iVar = 0; iVar < nVar; iVar++)	Residual_Ext_Surf[iVar] = 0.0;
+  for (unsigned short iVar = 0; iVar < nVar; iVar++)  Residual_Ext_Surf[iVar] = 0.0;
 }
 
 inline void CFEM_ElasVariable::Set_SurfaceLoad_Res_n(void) {
-	for (unsigned short iVar = 0; iVar < nVar; iVar++)	Residual_Ext_Surf_n[iVar] = Residual_Ext_Surf[iVar];
+  for (unsigned short iVar = 0; iVar < nVar; iVar++)  Residual_Ext_Surf_n[iVar] = Residual_Ext_Surf[iVar];
 }
 
 inline su2double CFEM_ElasVariable::Get_SurfaceLoad_Res_n(unsigned short iVar) { return Residual_Ext_Surf_n[iVar];}
 
 inline void CFEM_ElasVariable::Add_BodyForces_Res(su2double *val_bodyForce) {
-	for (unsigned short iVar = 0; iVar < nVar; iVar++)
-		Residual_Ext_Body[iVar] += val_bodyForce[iVar];
+  for (unsigned short iVar = 0; iVar < nVar; iVar++)
+    Residual_Ext_Body[iVar] += val_bodyForce[iVar];
 }
 
 inline su2double *CFEM_ElasVariable::Get_BodyForces_Res(void) { return Residual_Ext_Body;}
@@ -1024,17 +1070,17 @@ inline su2double *CFEM_ElasVariable::Get_BodyForces_Res(void) { return Residual_
 inline su2double CFEM_ElasVariable::Get_BodyForces_Res(unsigned short iVar) { return Residual_Ext_Body[iVar];}
 
 inline void CFEM_ElasVariable::Clear_BodyForces_Res(void) {
-	for (unsigned short iVar = 0; iVar < nVar; iVar++)	Residual_Ext_Body[iVar] = 0.0;
+  for (unsigned short iVar = 0; iVar < nVar; iVar++)  Residual_Ext_Body[iVar] = 0.0;
 }
 
 inline void CFEM_ElasVariable::Set_FlowTraction(su2double *val_flowTraction) {
-	for (unsigned short iVar = 0; iVar < nVar; iVar++)
-		FlowTraction[iVar] = val_flowTraction[iVar];
+  for (unsigned short iVar = 0; iVar < nVar; iVar++)
+    FlowTraction[iVar] = val_flowTraction[iVar];
 }
 
 inline void CFEM_ElasVariable::Add_FlowTraction(su2double *val_flowTraction) {
-	for (unsigned short iVar = 0; iVar < nVar; iVar++)
-		FlowTraction[iVar] += val_flowTraction[iVar];
+  for (unsigned short iVar = 0; iVar < nVar; iVar++)
+    FlowTraction[iVar] += val_flowTraction[iVar];
 }
 
 inline su2double *CFEM_ElasVariable::Get_FlowTraction(void) { return FlowTraction;}
@@ -1042,65 +1088,55 @@ inline su2double *CFEM_ElasVariable::Get_FlowTraction(void) { return FlowTractio
 inline su2double CFEM_ElasVariable::Get_FlowTraction(unsigned short iVar) { return FlowTraction[iVar];}
 
 inline void CFEM_ElasVariable::Clear_FlowTraction(void) {
-	for (unsigned short iVar = 0; iVar < nVar; iVar++)	FlowTraction[iVar] = 0.0;
+  for (unsigned short iVar = 0; iVar < nVar; iVar++)  FlowTraction[iVar] = 0.0;
 }
 
 inline void CFEM_ElasVariable::Set_FlowTraction_n(void) {
-	for (unsigned short iVar = 0; iVar < nVar; iVar++)	FlowTraction_n[iVar] = FlowTraction[iVar];
+  for (unsigned short iVar = 0; iVar < nVar; iVar++)  FlowTraction_n[iVar] = FlowTraction[iVar];
 }
 
 inline su2double CFEM_ElasVariable::Get_FlowTraction_n(unsigned short iVar) { return FlowTraction_n[iVar];}
 
 inline void CFEM_ElasVariable::SetSolution_time_n(void) {
-	for (unsigned short iVar = 0; iVar < nVar; iVar++)	Solution_time_n[iVar] = Solution[iVar];
+  for (unsigned short iVar = 0; iVar < nVar; iVar++)  Solution_time_n[iVar] = Solution[iVar];
 }
 
 inline void CFEM_ElasVariable::SetSolution_time_n(su2double *val_solution_time_n) {
-	for (unsigned short iVar = 0; iVar < nVar; iVar++)	Solution_time_n[iVar] = val_solution_time_n[iVar];
+  for (unsigned short iVar = 0; iVar < nVar; iVar++)  Solution_time_n[iVar] = val_solution_time_n[iVar];
 }
 
 inline void CFEM_ElasVariable::SetSolution_time_n(unsigned short val_var, su2double val_solution_time_n) { Solution_time_n[val_var] = val_solution_time_n; }
 
-inline su2double CFEM_ElasVariable::GetSolution_Adj(unsigned short val_var) {return Solution_Adj[val_var]; }
-
-inline void CFEM_ElasVariable::SetSolution_Adj(unsigned short val_var, su2double val_solution_adj) { Solution_Adj[val_var] = val_solution_adj;}
-
-inline su2double CFEM_ElasVariable::GetGradient_Adj(unsigned short val_var) {return Gradient_Adj[val_var]; }
-
-inline void CFEM_ElasVariable::SetGradient_Adj(unsigned short val_var, su2double val_gradient_adj) { Gradient_Adj[val_var] = val_gradient_adj; }
-
-inline void CFEM_ElasVariable::AddGradient_Adj(unsigned short val_var, su2double val_gradient_adj) { Gradient_Adj[val_var] += val_gradient_adj; }
-
 inline void CFEM_ElasVariable::SetSolution_Vel(unsigned short val_var, su2double val_solution_vel) { Solution_Vel[val_var] = val_solution_vel; }
 
 inline void CFEM_ElasVariable::SetSolution_Vel(su2double *val_solution_vel) {
-	for (unsigned short iVar = 0; iVar < nVar; iVar++)	Solution_Vel[iVar] = val_solution_vel[iVar];
+  for (unsigned short iVar = 0; iVar < nVar; iVar++)  Solution_Vel[iVar] = val_solution_vel[iVar];
 }
 
 inline void CFEM_ElasVariable::SetSolution_Vel_time_n(unsigned short val_var, su2double val_solution_vel_time_n) { Solution_Vel_time_n[val_var] = val_solution_vel_time_n; }
 
 inline void CFEM_ElasVariable::SetSolution_Vel_time_n(void) {
-	for (unsigned short iVar = 0; iVar < nVar; iVar++)	Solution_Vel_time_n[iVar] = Solution_Vel[iVar];
+  for (unsigned short iVar = 0; iVar < nVar; iVar++)  Solution_Vel_time_n[iVar] = Solution_Vel[iVar];
 }
 
 inline void CFEM_ElasVariable::SetSolution_Vel_time_n(su2double *val_solution_vel_time_n) {
-	for (unsigned short iVar = 0; iVar < nVar; iVar++)	Solution_Vel_time_n[iVar] = val_solution_vel_time_n[iVar];
+  for (unsigned short iVar = 0; iVar < nVar; iVar++)  Solution_Vel_time_n[iVar] = val_solution_vel_time_n[iVar];
 }
 
 inline void CFEM_ElasVariable::SetSolution_Accel(unsigned short val_var, su2double val_solution_accel) { Solution_Accel[val_var] = val_solution_accel;  }
 
 inline void CFEM_ElasVariable::SetSolution_Accel(su2double *val_solution_accel) {
-	for (unsigned short iVar = 0; iVar < nVar; iVar++)	Solution_Accel[iVar] = val_solution_accel[iVar];
+  for (unsigned short iVar = 0; iVar < nVar; iVar++)  Solution_Accel[iVar] = val_solution_accel[iVar];
 }
 
 inline void CFEM_ElasVariable::SetSolution_Accel_time_n(unsigned short val_var, su2double val_solution_accel_time_n) { Solution_Accel_time_n[val_var] = val_solution_accel_time_n; }
 
 inline void CFEM_ElasVariable::SetSolution_Accel_time_n(void) {
-	for (unsigned short iVar = 0; iVar < nVar; iVar++)	Solution_Accel_time_n[iVar] = Solution_Accel[iVar];
+  for (unsigned short iVar = 0; iVar < nVar; iVar++)  Solution_Accel_time_n[iVar] = Solution_Accel[iVar];
 }
 
 inline void CFEM_ElasVariable::SetSolution_Accel_time_n(su2double *val_solution_accel_time_n) {
-	for (unsigned short iVar = 0; iVar < nVar; iVar++)	Solution_Accel_time_n[iVar] = val_solution_accel_time_n[iVar];
+  for (unsigned short iVar = 0; iVar < nVar; iVar++)  Solution_Accel_time_n[iVar] = val_solution_accel_time_n[iVar];
 }
 
 inline void CFEM_ElasVariable::SetSolution_Pred(unsigned short val_var, su2double val_solution_pred) { Solution_Pred[val_var] = val_solution_pred;  }
@@ -1108,7 +1144,7 @@ inline void CFEM_ElasVariable::SetSolution_Pred(unsigned short val_var, su2doubl
 inline void CFEM_ElasVariable::SetSolution_Pred(su2double *val_solution_pred) { Solution_Pred = val_solution_pred;  }
 
 inline void CFEM_ElasVariable::SetSolution_Pred(void) {
-	for (unsigned short iVar = 0; iVar < nVar; iVar++) Solution_Pred[iVar] = Solution[iVar];
+  for (unsigned short iVar = 0; iVar < nVar; iVar++) Solution_Pred[iVar] = Solution[iVar];
 }
 
 inline void CFEM_ElasVariable::SetSolution_Pred_Old(unsigned short val_var, su2double val_solution_pred_old) { Solution_Pred_Old[val_var] = val_solution_pred_old;  }
@@ -1116,7 +1152,7 @@ inline void CFEM_ElasVariable::SetSolution_Pred_Old(unsigned short val_var, su2d
 inline void CFEM_ElasVariable::SetSolution_Pred_Old(su2double *val_solution_pred_Old) { Solution_Pred_Old = val_solution_pred_Old;  }
 
 inline void CFEM_ElasVariable::SetSolution_Pred_Old(void) {
-	for (unsigned short iVar = 0; iVar < nVar; iVar++) Solution_Pred_Old[iVar] = Solution_Pred[iVar];
+  for (unsigned short iVar = 0; iVar < nVar; iVar++) Solution_Pred_Old[iVar] = Solution_Pred[iVar];
 }
 
 
@@ -1191,19 +1227,7 @@ inline void CFEM_ElasVariable::RegisterSolution_Accel_time_n() {
 	    AD::RegisterInput(Solution_Accel_time_n[iVar]);
 }
 
-inline void CFEM_ElasVariable_Adj::SetReference_Geometry(unsigned short iVar, su2double ref_geometry){ Reference_Geometry[iVar] = ref_geometry;}
-
-inline su2double *CFEM_ElasVariable_Adj::GetReference_Geometry(void){ return Reference_Geometry; }
-
-inline su2double CFEM_ElasVariable_Adj::GetReference_Geometry(unsigned short iVar){ return Reference_Geometry[iVar]; }
-
-inline su2double CFEM_ElasVariable_Adj::GetGradient_Adj(unsigned short val_var) {return Gradient_Adj[val_var]; }
-
-inline void CFEM_ElasVariable_Adj::SetGradient_Adj(unsigned short val_var, su2double val_gradient_adj) { Gradient_Adj[val_var] = val_gradient_adj; }
-
-inline void CFEM_ElasVariable_Adj::AddGradient_Adj(unsigned short val_var, su2double val_gradient_adj) { Gradient_Adj[val_var] += val_gradient_adj; }
-
-inline void CFEM_ElasVariable::SetPrestretch(unsigned short iVar, su2double val_prestretch){ Prestretch[iVar] = val_prestretch;}
+inline void CFEM_ElasVariable::SetPrestretch(unsigned short iVar, su2double val_prestretch) { Prestretch[iVar] = val_prestretch;}
 
 inline su2double *CFEM_ElasVariable::GetPrestretch(void) { return Prestretch; }
 
@@ -1231,9 +1255,13 @@ inline void CTurbSAVariable::SetHarmonicBalance_Source(unsigned short val_var, s
 
 inline su2double CTurbSAVariable::GetHarmonicBalance_Source(unsigned short val_var) { return HB_Source[val_var]; }
 
-inline void CTurbMLVariable::SetHarmonicBalance_Source(unsigned short val_var, su2double val_source) { HB_Source[val_var] = val_source; }
+inline su2double CTurbSAVariable::GetGammaBC(void) { return gamma_BC; }
 
-inline su2double CTurbMLVariable::GetHarmonicBalance_Source(unsigned short val_var) { return HB_Source[val_var]; }
+inline void CTurbSAVariable::SetGammaBC(su2double val_gamma) { gamma_BC = val_gamma; }
+
+inline su2double CTurbSAVariable::GetDES_LengthScale(void) { return DES_LengthScale; }
+
+inline void CTurbSAVariable::SetDES_LengthScale(su2double val_des_lengthscale) { DES_LengthScale = val_des_lengthscale; }
 
 inline su2double CTurbSSTVariable::GetF1blending() { return F1; }
 
@@ -1365,6 +1393,10 @@ inline void CDiscAdjVariable::Set_OldSolution_Geometry(void) {
 inline su2double CDiscAdjVariable::GetGeometry_CrossTerm_Derivative(unsigned short val_var) { return Geometry_CrossTerm_Derivative[val_var];}
 
 inline void CDiscAdjVariable::SetGeometry_CrossTerm_Derivative(unsigned short iDim, su2double der) { Geometry_CrossTerm_Derivative[iDim] = der;}
+
+inline su2double CDiscAdjVariable::GetGeometry_CrossTerm_Derivative_Flow(unsigned short val_var) { return Geometry_CrossTerm_Derivative_Flow[val_var];}
+
+inline void CDiscAdjVariable::SetGeometry_CrossTerm_Derivative_Flow(unsigned short iDim, su2double der) { Geometry_CrossTerm_Derivative_Flow[iDim] = der;}
 
 inline su2double CDiscAdjFEAVariable::GetGeometry_CrossTerm_Derivative(unsigned short val_var) { return Geometry_CrossTerm_Derivative[val_var];}
 
