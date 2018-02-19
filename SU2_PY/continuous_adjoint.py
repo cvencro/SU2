@@ -5,8 +5,8 @@
 #  \author F. Palacios, T. Economon, T. Lukaczyk
 #  \version 5.0.0 "Raven"
 #
-# SU2 Lead Developers: Dr. Francisco Palacios (Francisco.D.Palacios@boeing.com).
-#                      Dr. Thomas D. Economon (economon@stanford.edu).
+# SU2 Original Developers: Dr. Francisco D. Palacios.
+#                          Dr. Thomas D. Economon.
 #
 # SU2 Developers: Prof. Juan J. Alonso's group at Stanford University.
 #                 Prof. Piero Colonna's group at Delft University of Technology.
@@ -31,7 +31,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with SU2. If not, see <http://www.gnu.org/licenses/>.
 
-import os, sys, shutil, copy
+import os, sys
 from optparse import OptionParser
 sys.path.append(os.environ['SU2_RUN'])
 import SU2
@@ -52,16 +52,20 @@ def main():
                       help="COMPUTE direct and adjoint problem", metavar="COMPUTE")
     parser.add_option("-s", "--step",       dest="step",       default=1E-4,
                       help="DOT finite difference STEP", metavar="STEP")    
+    parser.add_option("-z", "--zones", dest="nzones", default="1",
+                      help="Number of Zones", metavar="ZONES")
     
     (options, args)=parser.parse_args()
     options.partitions  = int( options.partitions )
     options.step        = float( options.step )
     options.compute     = options.compute.upper() == 'TRUE'
+    options.nzones      = int( options.nzones )
     
     continuous_adjoint( options.filename    ,
                         options.partitions  ,
                         options.compute     ,
-                        options.step         )
+                        options.step        , 
+                        options.nzones       )
         
 #: def main()
 
@@ -73,13 +77,15 @@ def main():
 def continuous_adjoint( filename           , 
                         partitions  = 0    , 
                         compute     = True ,
-                        step        = 1e-4  ):
+                        step        = 1e-4 ,
+                        nzones      = 1     ):
     
     # Config
     problem = SU2.io.Problem(filename)
     config = problem.config
     config.NUMBER_PART = partitions
-    
+    config.NZONES      = int( nzones )
+
     # State
     state = SU2.io.State()
     
@@ -102,12 +108,12 @@ def continuous_adjoint( filename           ,
 
     # Adjoint Solution
 
-    # If using chain rule update coefficients using gradients as defined in downstream_function (local file)
-    if 'OUTFLOW_GENERALIZED' in config.OBJECTIVE_FUNCTION:
-        import downstream_function # Must be defined in run folder
-        chaingrad = downstream_function.downstream_gradient(config,state,step)
-        # Set coefficients for gradients
-        config.OBJ_CHAIN_RULE_COEFF = str(chaingrad[0:5])
+#    # If using chain rule update coefficients using gradients as defined in downstream_function (local file)
+#    if 'OUTFLOW_GENERALIZED' in config.OBJECTIVE_FUNCTION:
+#        import downstream_function # Must be defined in run folder
+#        chaingrad = downstream_function.downstream_gradient(config,state,step)
+#        # Set coefficients for gradients
+#        config.OBJ_CHAIN_RULE_COEFF = str(chaingrad[0:5])
     # Run all-at-once 
     if compute:
         info = SU2.run.adjoint(problem)

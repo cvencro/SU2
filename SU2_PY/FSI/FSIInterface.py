@@ -5,8 +5,8 @@
 #  \author David Thomas
 #  \version 5.0.0 "Raven"
 #
-# SU2 Lead Developers: Dr. Francisco Palacios (Francisco.D.Palacios@boeing.com).
-#                      Dr. Thomas D. Economon (economon@stanford.edu).
+# SU2 Original Developers: Dr. Francisco D. Palacios.
+#                          Dr. Thomas D. Economon.
 #
 # SU2 Developers: Prof. Juan J. Alonso's group at Stanford University.
 #                 Prof. Piero Colonna's group at Delft University of Technology.
@@ -222,11 +222,20 @@ class Interface:
           MPIsize = 1
 	
 	# --- Identify the fluid and solid interfaces and store the number of nodes on both sides (and for each partition) ---
+        self.fluidInterfaceIdentifier = None
+        self.nLocalFluidInterfaceNodes = 0
         if FluidSolver != None:
 	    print('Fluid solver is initialized on process {}'.format(myid))
             self.haveFluidSolver = True
-	    self.fluidInterfaceIdentifier = FluidSolver.GetMovingMarker()
-	    self.nLocalFluidInterfaceNodes = FluidSolver.GetNumberVertices(self.fluidInterfaceIdentifier)
+            allMovingMarkersTags = FluidSolver.GetAllMovingMarkersTag()
+            allMarkersID = FluidSolver.GetAllBoundaryMarkers()
+            if not allMovingMarkersTags:
+                raise Exception('No interface for FSI was defined.')
+            else:
+                if allMovingMarkersTags[0] in allMarkersID.keys():
+                    self.fluidInterfaceIdentifier = allMarkersID[allMovingMarkersTags[0]]
+            if self.fluidInterfaceIdentifier != None:
+	        self.nLocalFluidInterfaceNodes = FluidSolver.GetNumberVertices(self.fluidInterfaceIdentifier)
 	    if self.nLocalFluidInterfaceNodes != 0:
               self.haveFluidInterface = True
 	      print('Number of interface fluid nodes (halo nodes included) on proccess {} : {}'.format(myid,self.nLocalFluidInterfaceNodes))

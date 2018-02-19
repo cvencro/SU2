@@ -5,8 +5,8 @@
 #  \author T. Lukaczyk, F. Palacios
 #  \version 5.0.0 "Raven"
 #
-# SU2 Lead Developers: Dr. Francisco Palacios (Francisco.D.Palacios@boeing.com).
-#                      Dr. Thomas D. Economon (economon@stanford.edu).
+# SU2 Original Developers: Dr. Francisco D. Palacios.
+#                          Dr. Thomas D. Economon.
 #
 # SU2 Developers: Prof. Juan J. Alonso's group at Stanford University.
 #                 Prof. Piero Colonna's group at Delft University of Technology.
@@ -36,7 +36,7 @@
 # ----------------------------------------------------------------------
 
 import os, sys, shutil, copy, time
-from ..io   import expand_part, expand_time, get_adjointSuffix, add_suffix, \
+from ..io   import expand_part, expand_zones, expand_time, get_adjointSuffix, add_suffix, \
                    get_specialCases, Config
 from .physics import *
 from ..util import bunch
@@ -158,16 +158,16 @@ class State(ordered_bunch):
     
     def __str__(self):
         output = 'STATE:'
-        for k1,v1 in self.iteritems():
+        for k1, v1 in self.iteritems():
             output += '\n    %s:' % k1
             if isinstance(v1,dict):
-                for k2,v2 in v1.iteritems():
+                for k2, v2 in v1.iteritems():
                     output += '\n        %s: %s' % (k2,v2)
             else:
                 output += '\n        %s' % v1
         return output
     
-    def pullnlink(self, problem):
+    def pullnlink(self,problem):
         """ pull,link = SU2.io.State.pullnlink(config)
             returns lists pull and link of files for folder
             redirection, based on a given config
@@ -178,20 +178,20 @@ class State(ordered_bunch):
         pull = []; link = []
         
         # choose files to pull and link
-        for key,value in self.FILES.iteritems():
+        for key, value in self.FILES.iteritems():
             
             # link big files
             if key == 'MESH':
                 # mesh (merged or partitioned)
-                value = expand_part(value, phys)
+                value = expand_part(value,phys)
                 link.extend(value)
             elif key == 'DIRECT':
                 # direct solution
-                value = expand_time(value, phys)
+                value = expand_time(value,phys)
                 link.extend(value)
             elif 'ADJOINT_' in key:
                 # adjoint solution
-                value = expand_time(value, phys)
+                value = expand_time(value,phys)
                 link.extend(value)
             #elif key == 'STABILITY':
                 #pass

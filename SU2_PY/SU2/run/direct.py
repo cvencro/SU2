@@ -5,8 +5,8 @@
 #  \author T. Lukaczyk, F. Palacios
 #  \version 5.0.0 "Raven"
 #
-# SU2 Lead Developers: Dr. Francisco Palacios (Francisco.D.Palacios@boeing.com).
-#                      Dr. Thomas D. Economon (economon@stanford.edu).
+# SU2 Original Developers: Dr. Francisco D. Palacios.
+#                          Dr. Thomas D. Economon.
 #
 # SU2 Developers: Prof. Juan J. Alonso's group at Stanford University.
 #                 Prof. Piero Colonna's group at Delft University of Technology.
@@ -35,11 +35,11 @@
 #  Imports
 # ----------------------------------------------------------------------
 
-import os, sys, shutil, copy
+import copy
 
 from .. import io  as su2io
-from merge     import merge     as su2merge
-from interface import CFD       as SU2_CFD
+from .merge     import merge     as su2merge
+from .interface import CFD       as SU2_CFD
 
 # ----------------------------------------------------------------------
 #  Direct Simulation
@@ -88,16 +88,40 @@ def direct ( problem ):
 
     # merge
     problem.physics.merge_solution(konfig)
+#    konfig['SOLUTION_FLOW_FILENAME'] = konfig['RESTART_FLOW_FILENAME']
+#    if 'FLUID_STRUCTURE_INTERACTION' in multizone_cases:
+#        konfig['SOLUTION_STRUCTURE_FILENAME'] = konfig['RESTART_STRUCTURE_FILENAME']
     su2merge(konfig)
+    
+#    # filenames
+#    plot_format      = konfig['OUTPUT_FORMAT']
+#    plot_extension   = su2io.get_extension(plot_format)
+#    history_filename = konfig['CONV_FILENAME'] + plot_extension
+#    special_cases    = su2io.get_specialCases(konfig)
+#    
+#    # averaging final iterations
+#    final_avg = config.get('ITER_AVERAGE_OBJ',0)
 
+#    # get history and objectives
+#    history      = su2io.read_history( history_filename , config.NZONES)
+#    aerodynamics = su2io.read_aerodynamics( history_filename , config.NZONES, special_cases, final_avg )
+    
     # update super config
-    problem.config.update({'MATH_PROBLEM': konfig['MATH_PROBLEM']})
-
-    # create state object to send info out
+    problem.config.update({ 'MATH_PROBLEM' : konfig['MATH_PROBLEM']  })
+                    
+    # info out
     info = su2io.State()
-
     # for the kinds of Objective Functions in the problem, read the output (state.history, state.functions)
     for key in problem.ofunction:
         problem.ofunction[key].read_output(provlem, info)
+#    info.FUNCTIONS.update( aerodynamics )
+#    info.FILES.DIRECT = konfig['RESTART_FLOW_FILENAME']
+#    if 'EQUIV_AREA' in special_cases:
+#        info.FILES.WEIGHT_NF = 'WeightNF.dat'
+#    if 'INV_DESIGN_CP' in special_cases:
+#        info.FILES.TARGET_CP = 'TargetCp.dat'
+#    if 'INV_DESIGN_HEATFLUX' in special_cases:
+#        info.FILES.TARGET_HEATFLUX = 'TargetHeatFlux.dat'
+#    info.HISTORY.DIRECT = history
     
     return info

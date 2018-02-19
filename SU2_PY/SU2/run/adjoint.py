@@ -5,8 +5,8 @@
 #  \author T. Lukaczyk, F. Palacios
 #  \version 5.0.0 "Raven"
 #
-# SU2 Lead Developers: Dr. Francisco Palacios (Francisco.D.Palacios@boeing.com).
-#                      Dr. Thomas D. Economon (economon@stanford.edu).
+# SU2 Original Developers: Dr. Francisco D. Palacios.
+#                          Dr. Thomas D. Economon.
 #
 # SU2 Developers: Prof. Juan J. Alonso's group at Stanford University.
 #                 Prof. Piero Colonna's group at Delft University of Technology.
@@ -35,12 +35,11 @@
 #  Imports
 # ----------------------------------------------------------------------
 
-import os, sys, shutil, copy
+import copy
 
 from .. import io  as su2io
-from .. import util as su2util
-from merge     import merge     as su2merge
-from interface import CFD       as SU2_CFD
+from .merge     import merge     as su2merge
+from .interface import CFD       as SU2_CFD
 
 # ----------------------------------------------------------------------
 #  Adjoint Simulation
@@ -87,6 +86,8 @@ def adjoint( problem ):
 # TODO: fix merge for structural adjoint
 #    problem.physics.merge_solution(konfig)
 #    su2merge(konfig)
+##    konfig['SOLUTION_ADJ_FILENAME'] = konfig['RESTART_ADJ_FILENAME'] 
+##    su2merge(konfig)
     
     # filenames
     plot_format      = konfig['OUTPUT_FORMAT']
@@ -96,6 +97,7 @@ def adjoint( problem ):
     
     # get history
     history = su2io.read_history( history_filename )
+#    history = su2io.read_history( history_filename, config.NZONES )
     
     # update super config
     problem.config.update({ 'MATH_PROBLEM' : konfig['MATH_PROBLEM'] ,
@@ -103,15 +105,17 @@ def adjoint( problem ):
     
     # files out
     objective    = konfig['OBJECTIVE_FUNCTION']
+    if "," in objective:
+            objective="COMBO"
     adj_title    = 'ADJOINT_' + objective
     suffix       = su2io.get_adjointSuffix(objective)
     # TODO: hack - need to add a loop to account for multiphysics
     restart_name = problem.physics.files['RESTART_ADJOINT'][0]
-    restart_name = su2io.add_suffix(restart_name, suffix)
-
+    restart_name = su2io.add_suffix(restart_name,suffix)
+    
     # info out
     info = su2io.State()
     info.FILES[adj_title] = restart_name
     info.HISTORY[adj_title] = history
-
+    
     return info

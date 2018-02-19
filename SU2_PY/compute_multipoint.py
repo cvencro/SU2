@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-## \file which.py
-#  \brief looks for where a program is
-#  \author T. Lukaczyk, F. Palacios
+## \file Compute_multipoint.py
+#  \brief Python script for performing a multipoint design.
+#  \author Indiana Stokes
 #  \version 5.0.0 "Raven"
 #
 # SU2 Original Developers: Dr. Francisco D. Palacios.
@@ -13,8 +13,6 @@
 #                 Prof. Nicolas R. Gauger's group at Kaiserslautern University of Technology.
 #                 Prof. Alberto Guardone's group at Polytechnic University of Milan.
 #                 Prof. Rafael Palacios' group at Imperial College London.
-#                 Prof. Edwin van der Weide's group at the University of Twente.
-#                 Prof. Vincent Terrapon's group at the University of Liege.
 #
 # Copyright (C) 2012-2017 SU2, the open-source CFD code.
 #
@@ -31,35 +29,35 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with SU2. If not, see <http://www.gnu.org/licenses/>.
 
+# imports
+import numpy as np
+from optparse import OptionParser
+import os, sys, shutil, copy
+import SU2
 
-import os
+# Command Line Options
+parser = OptionParser()
+parser.add_option("-f", "--file", dest="filename",
+                  help="read config from FILE", metavar="FILE")
+parser.add_option("-n", "--partitions", dest="partitions", default=2,
+                  help="number of PARTITIONS", metavar="PARTITIONS")
 
-def which(program):
-    """ which(program_name)
-        finds the location of the program_name if it is on PATH
-        returns None if program cannot be found
-        does not test for .exe extension on windows
-        
-        original source:
-        http://stackoverflow.com/questions/377017/test-if-executable-exists-in-python
-    """
-    
-    fpath, fname = os.path.split(program)
-    if fpath:
-        if is_exe(program):
-            return program
-    else:
-        for path in os.environ["PATH"].split(os.pathsep):
-            path = path.strip('"')
-            for ext in ['','.exe','.bat']:
-                exe_file = os.path.join(path, (program+ext))
-                if is_exe(exe_file):
-                    return exe_file
+(options, args)=parser.parse_args()
+options.partitions = int( options.partitions )
 
-    return None
+# load config, start state
+config = SU2.io.Config(options.filename)
+state  = SU2.io.State()
 
-def is_exe(fpath):
-    return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
-    
-    
- 
+# prepare config
+config.NUMBER_PART = options.partitions
+
+# find solution files if they exist
+state.find_files(config)
+
+# run su2
+multipoint_drag = SU2.eval.func('MULTIPOINT_DRAG',config,state)
+grad_multipoint_drag= SU2.eval.grad('MULTIPOINT_DRAG','CONTINUOUS_ADJOINT',config,state)
+
+print('MULTIPOINT_DRAG     =', multipoint_drag)
+print('GRADIENT MULTIPOINT_DRAG =', grad_multipoint_drag)

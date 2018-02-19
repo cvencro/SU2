@@ -5,8 +5,8 @@
 #  \author T. Lukaczyk, F. Palacios
 #  \version 5.0.0 "Raven"
 #
-# SU2 Lead Developers: Dr. Francisco Palacios (Francisco.D.Palacios@boeing.com).
-#                      Dr. Thomas D. Economon (economon@stanford.edu).
+# SU2 Original Developers: Dr. Francisco D. Palacios.
+#                          Dr. Thomas D. Economon.
 #
 # SU2 Developers: Prof. Juan J. Alonso's group at Stanford University.
 #                 Prof. Piero Colonna's group at Delft University of Technology.
@@ -35,11 +35,10 @@
 #  Imports
 # -------------------------------------------------------------------
 
-import os, sys, shutil, copy
+import sys
 
 from .. import eval as su2eval
 from numpy import array, zeros
-from numpy.linalg import norm
 
 
 # -------------------------------------------------------------------
@@ -386,6 +385,7 @@ def obj_f(x,project):
         su2:         minimize f(x), list[nobj]
         scipy_slsqp: minimize f(x), float
     """
+        
     obj_list = project.obj_f(x)
     obj = 0
     for this_obj in obj_list:
@@ -401,7 +401,8 @@ def obj_df(x,project):
         
         su2:         df(x), list[nobj x dim]
         scipy_slsqp: df(x), ndarray[dim]
-    """
+    """    
+    
     dobj_list = project.obj_df(x)
     dobj=[0.0]*len(dobj_list[0])
     

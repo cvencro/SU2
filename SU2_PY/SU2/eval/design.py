@@ -5,8 +5,8 @@
 #  \author T. Lukaczyk, F. Palacios
 #  \version 5.0.0 "Raven"
 #
-# SU2 Lead Developers: Dr. Francisco Palacios (Francisco.D.Palacios@boeing.com).
-#                      Dr. Thomas D. Economon (economon@stanford.edu).
+# SU2 Original Developers: Dr. Francisco D. Palacios.
+#                          Dr. Thomas D. Economon.
 #
 # SU2 Developers: Prof. Juan J. Alonso's group at Stanford University.
 #                 Prof. Piero Colonna's group at Delft University of Technology.
@@ -35,7 +35,7 @@
 #  Imports
 # ----------------------------------------------------------------------
 
-import os, sys, shutil, copy, glob, re
+import os, sys, copy
 from .. import io   as su2io
 from .  import func as su2func
 from .  import grad as su2grad
@@ -111,7 +111,7 @@ class Design(object):
             
         # initialize folder with files
         pull,link = state.pullnlink(problem)
-        with redirect_folder(folder, pull, link, force=True):
+        with redirect_folder(folder,pull,link,force=True):
             # save design, config
             save_data(self.filename,self)
             config.dump('config_DSN.cfg')
@@ -121,7 +121,6 @@ class Design(object):
         """ Evaluates an SU2 Design 
             always adds config and state to the inputs list
         """
-
         problem= self.problem
         config = self.config
         state  = self.state
@@ -136,7 +135,7 @@ class Design(object):
         assert os.path.exists(folder) , 'cannot find design folder %s' % folder
         
         # list files to pull and link
-        pull, link = state.pullnlink(problem)
+        pull,link = state.pullnlink(problem)
         
         # output redirection, don't re-pull files
         with redirect_folder(folder,pull,link,force=False) as push:
@@ -145,7 +144,7 @@ class Design(object):
             timestamp = state.tic()
             
             # run 
-            inputs = args + (problem, state)
+            inputs = args + (problem,state)
             vals = eval_func(*inputs)
             
             # save design
@@ -224,12 +223,12 @@ def obj_f(dvs,problem,state=None):
         
         Outputs a float.
     """
-
+    
     # unpack config and state 
     problem.unpack_dvs(dvs)
     config = problem.config
     state = su2io.State(state)
-
+    
     def_objs = problem['OBJECTIVE_FUNCTION']
     objectives = def_objs.keys()
 
@@ -246,6 +245,7 @@ def obj_f(dvs,problem,state=None):
         func += su2func(this_obj, problem, state) * sign * scale
         
     vals_out.append(func)
+
     #: for each objective
     
     return vals_out
@@ -562,7 +562,6 @@ def con_dcieq(dvs, problem, state=None):
     #: for each constraint
     
     return vals_out
-             
     
 #: def obj_dcieq()
 

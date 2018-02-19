@@ -5,8 +5,8 @@
 #  \author T. Lukaczyk, F. Palacios
 #  \version 5.0.0 "Raven"
 #
-# SU2 Lead Developers: Dr. Francisco Palacios (Francisco.D.Palacios@boeing.com).
-#                      Dr. Thomas D. Economon (economon@stanford.edu).
+# SU2 Original Developers: Dr. Francisco D. Palacios.
+#                          Dr. Thomas D. Economon.
 #
 # SU2 Developers: Prof. Juan J. Alonso's group at Stanford University.
 #                 Prof. Piero Colonna's group at Delft University of Technology.
@@ -30,6 +30,9 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with SU2. If not, see <http://www.gnu.org/licenses/>.
+
+# make print(*args) function available in PY2.6+, does'nt work on PY < 2.6
+from __future__ import print_function
 
 # -------------------------------------------------------------------
 #  Imports
@@ -106,10 +109,27 @@ class Project(object):
         if '*' in folder: folder = su2io.next_folder(folder)        
         if designs is None: designs = []
         
-        print 'New Project: %s' % (folder)
+        print('New Project: %s' % (folder))
         
         # setup opt object
         problem = copy.deepcopy(problem)
+#        # setup config
+#        config = copy.deepcopy(config)
+#        
+#        # data_dict creation does not preserve the ordering of the config file.
+#        # This section ensures that the order of markers and objectives match 
+#        # It is only needed when more than one objective is used.
+#        def_objs = config['OPT_OBJECTIVE']
+#        if len(def_objs)>1:
+#            objectives = def_objs.keys()
+#            marker_monitoring = []
+#            weights = []
+#            for i_obj, this_obj in enumerate(objectives):
+#                marker_monitoring+=[def_objs[this_obj]['MARKER']]
+#                weights+=[str(def_objs[this_obj]['SCALE'])]
+#            config['MARKER_MONITORING'] = marker_monitoring
+#            config['OBJECTIVE_WEIGHT'] = ",".join(weights)
+#            config['OBJECTIVE_FUNCTION'] = ",".join(objectives)
         
         # setup state
         if state is None:
@@ -125,23 +145,23 @@ class Project(object):
         if 'OUTFLOW_GENERALIZED' in problem.OBJECTIVE_FUNCTION:
             state.FILES['DownstreamFunction'] = 'downstream_function.py'
         if 'MESH' not in state.FILES:
-            raise Exception , 'Could not find mesh file: %s' % problem.config.MESH_FILENAME
+            raise Exception('Could not find mesh file: %s' % problem.config.MESH_FILENAME)
         
         self.problem = problem          # base definition
         self.config  = problem.config   # base config
-        self.state   = state            # base state
-        self.files   = state.FILES      # base files
-        self.designs = designs          # design list
-        self.folder  = folder           # project folder
+        self.state   = state       # base state
+        self.files   = state.FILES # base files
+        self.designs = designs     # design list
+        self.folder  = folder      # project folder
         self.results = su2util.ordered_bunch() # project design results
-
+        
         # output filenames
         self.filename = 'project.pkl' 
         self.results_filename = 'results.pkl' 
         
         # initialize folder with files
-        pull, link = state.pullnlink(problem)
-        with redirect_folder(folder, pull, link, force=True):
+        pull,link = state.pullnlink(problem)
+        with redirect_folder(folder,pull,link,force=True):
         
             # look for existing designs
             folders = glob.glob(self._design_folder)
@@ -185,10 +205,10 @@ class Project(object):
             design = self.new_design(provlem)
             
             if config.get('CONSOLE','VERBOSE') == 'VERBOSE':
-                print os.path.join(self.folder,design.folder)
+                print(os.path.join(self.folder,design.folder))
             timestamp = design.state.tic()
             
-            # run design
+            # run design+
             vals = design._eval(func,*args)
             
             # check for update
@@ -261,8 +281,8 @@ class Project(object):
     
     def user(self,user_func,config,*args):
         raise NotImplementedError
-        #return self._eval(config, user_func,*args)
-
+        #return self._eval(config, user_func,*args) 
+    
     # add_design not being used
     # def add_design(self,config):
     #     #func = su2eval.touch # hack - TWL
@@ -290,7 +310,7 @@ class Project(object):
         #: if new design    
         
         return design
-
+    
     # get design not used
     # def get_design(self,config):
     #     konfig = copy.deepcopy(config)
@@ -338,7 +358,7 @@ class Project(object):
         konfig = provlem.config
         ztate  = copy.deepcopy(self.state)
         if closest is None: closest = []
-
+        
         # use closest design as seed
         if closest:
             # copy useful state info
@@ -404,7 +424,7 @@ class Project(object):
             for key in design.state.GRADIENTS.keys():
                 results.GRADIENTS[key] = []
             for TYPE in design.state.HISTORY.keys():
-                if not results.HISTORY.has_key(TYPE):
+                if not TYPE in results.HISTORY:
                     results.HISTORY[TYPE] = su2util.ordered_bunch()
                 for key in design.state.HISTORY[TYPE].keys():
                     results.HISTORY[TYPE][key] = []
@@ -417,21 +437,19 @@ class Project(object):
                 if n_dv != this_ndv:
                     warn('different dv vector length during compile_results()')
         #: for each design
-        
-
             
         # populate results
         for design in self.designs:
             this_designvector = design.state.design_vector()
             results.VARIABLES.append( this_designvector )
             for key in results.FUNCTIONS.keys():
-                if design.state.FUNCTIONS.has_key(key):
+                if key in design.state.FUNCTIONS:
                     new_func = design.state.FUNCTIONS[key]
                 else:
                     new_func = default
                 results.FUNCTIONS[key].append(new_func)
             for key in results.GRADIENTS.keys():
-                if design.state.GRADIENTS.has_key(key):
+                if key in design.state.GRADIENTS:
                     new_grad = design.state.GRADIENTS[key]
                 else:
                     new_grad = [default] * len( this_designvector )
@@ -463,7 +481,7 @@ class Project(object):
         su2io.save_data(filename,results)
             
         return self.results
-
+    
     # deep compile not used
     # def deep_compile(self):
     #     """ Project.deep_compile()
